@@ -1,51 +1,12 @@
-import * as tracer from 'tracer'
+import {Logger} from 'klg-logger'
 
-export interface LogConfig {
-  level?: string
-  dateformat?: string
-  stackIndex?: number
-  inspectOpt?: {
-    showHidden?: boolean
-    depth?: number
-  },
-  transport?: Function
-}
-
-export class Logger {
-  private logger: any
-  private config: LogConfig
-
-  constructor (config?: LogConfig) {
-    if (config) {
-      if (!config.stackIndex) config.stackIndex = 1
-      this.config = config
-    } else {
-      this.config = {stackIndex: 1}
-    }
-    this.logger = tracer.console(this.config)
+const logger = new Logger({
+  level: 'info',
+  dateformat: 'yyyy-mm-dd HH:MM:ss.L',
+  inspectOpt: {
+    showHidden: false, // if true then the object's non-enumerable properties will be shown too. Defaults to false
+    depth: 5 // tells inspect how many times to recurse while formatting the object. This is useful for inspecting large complicated objects. Defaults to 2. To make it recurse indefinitely pass null.
   }
+})
 
-  log (msg: any, ...params): void {
-    this.logger.log.apply(this, arguments)
-  }
-
-  info (msg: any, ...params): void {
-    this.logger.info.apply(this, arguments)
-  }
-
-  debug (msg: any, ...params): void {
-    this.logger.debug.apply(this, arguments)
-  }
-
-  warn (msg: any, ...params): void {
-    this.logger.warn.apply(this, arguments)
-  }
-
-  error (msg: any, ...params): void {
-    this.logger.error.apply(this, arguments)
-  }
-
-  err (msg: any, ...params): void {
-    this.error.apply(this, arguments)
-  }
-}
+export default logger
