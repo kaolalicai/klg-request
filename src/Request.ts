@@ -1,6 +1,11 @@
 import * as request from 'superagent'
 import * as _ from 'lodash'
-import logger from './Logger'
+import {Logger} from 'klg-logger'
+
+const logger = new Logger({
+  level: 'info',
+  dateformat: 'yyyy-mm-dd HH:MM:ss.L'
+})
 
 export interface RequestData {
   userId: string,
