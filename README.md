@@ -3,7 +3,15 @@ http request util
 
 ## QuickStart
 
-<!-- add docs here for user -->
+### Install
+
+```
+npm i klg-request --save
+```
+
+### Usage
+
+参考 test
 
 ### Test
 
