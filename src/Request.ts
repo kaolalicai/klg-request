@@ -23,8 +23,8 @@ export interface RequestData {
   }
 }
 
-type HandleFunBefore = (data: RequestData) => Promise<RequestData>
-type HandleFunAfter = (data: any) => Promise<any>
+export type HandleFunBefore = (data: RequestData) => Promise<RequestData>
+export type HandleFunAfter = (data: any) => Promise<any>
 
 export interface RequestConfig {
   retryWhen500?: boolean
@@ -35,7 +35,7 @@ export interface RequestConfig {
   beforeSend?: HandleFunBefore
 }
 
-type ResponseData = { err: string, status: string } & object
+export type ResponseData = { err: string, status: string } & object
 
 export class Request {
   private config: RequestConfig
