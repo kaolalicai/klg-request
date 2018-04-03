@@ -18,15 +18,16 @@ export interface RequestData {
   }
 }
 
-type HandleFun = (data: object) => Promise<RequestData>
+type HandleFunBefore = (data: RequestData) => Promise<RequestData>
+type HandleFunAfter = (data: any) => Promise<any>
 
 export interface RequestConfig {
   retryWhen500?: boolean
   retryWhenTimeout?: boolean
   retryWhenConnectError?: boolean
   timeOut?: number
-  afterSend?: HandleFun
-  beforeSend?: HandleFun
+  afterSend?: HandleFunAfter
+  beforeSend?: HandleFunBefore
 }
 
 type ResponseData = { err: string, status: string } & object
@@ -42,12 +43,13 @@ export class Request {
       retryWhenTimeout: false,
       retryWhenConnectError: true
     }
-    if (config) {
-      if (config.timeOut !== undefined) this.config.timeOut = config.timeOut
-      if (config.retryWhen500 !== undefined) this.config.retryWhen500 = config.retryWhen500
-      if (config.retryWhenTimeout !== undefined) this.config.retryWhenTimeout = config.retryWhenTimeout
-      if (config.retryWhenConnectError !== undefined) this.config.retryWhenConnectError = config.retryWhenConnectError
-    }
+    Object.assign(this.config, config)
+    // if (config) {
+    //   if (config.timeOut !== undefined) this.config.timeOut = config.timeOut
+    //   if (config.retryWhen500 !== undefined) this.config.retryWhen500 = config.retryWhen500
+    //   if (config.retryWhenTimeout !== undefined) this.config.retryWhenTimeout = config.retryWhenTimeout
+    //   if (config.retryWhenConnectError !== undefined) this.config.retryWhenConnectError = config.retryWhenConnectError
+    // }
   }
 
   async sendData (data: RequestData): Promise<ResponseData> {
@@ -62,14 +64,14 @@ export class Request {
     let response = null
     let httpMethod = options.httpMethod
     try {
-      logger.info('request to ', url)
+      logger.info(`request[${httpMethod}] to ${url}`)
       res = await request[httpMethod](url)
         .type(options.postType)
         .timeout(this.config.timeOut)
         .send(body)
         .set('Accept', options.accept)
         .set(options.headers || {})
-      response = JSON.parse(res.text);
+      response = JSON.parse(res.text)
     } catch (err) {
       logger.error('request err', url || interfaceName || server || 'none', err.message)
       response = {err: err.message, status: err.status}
@@ -81,18 +83,20 @@ export class Request {
   }
 
   async sendDataRetry (data: RequestData, limit = 5) {
-    const config = this.config
     let res = await this.sendData(data)
-    if (res.err) {
+    if (this.shouldRetry(res)) {
       // 递归的出口
       if (limit <= 1) return res
-      const shouldRetry = shouldRetryConnectError(res.err) || shouldRetryStatus500(res) || shouldRetryTimeOut(res.err)
-      if (shouldRetry) {
-        data.currentAttempt = (data.currentAttempt || 1) + 1
-        return await this.sendDataRetry(data, --limit)
-      }
+      data.currentAttempt = (data.currentAttempt || 1) + 1
+      return await this.sendDataRetry(data, --limit)
     }
     return res
+  }
+
+  shouldRetry (res) {
+    if (!res || !res.err) return false
+    const config = this.config
+    return Boolean(shouldRetryConnectError(res.err) || shouldRetryStatus500(res) || shouldRetryTimeOut(res.err))
 
     function shouldRetryConnectError (err) {
       return config.retryWhenConnectError && (

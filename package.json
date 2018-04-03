@@ -56,6 +56,8 @@
     "@types/nock": "^9.1.2",
     "@types/power-assert": "^1.4.29",
     "jest": "^22.4.2",
+    "mockgoose": "^7.3.5",
+    "mongoose": "^5.0.12",
     "nock": "^9.2.3",
     "power-assert": "^1.4.4",
     "source-map-support": "^0.5.3",
