@@ -45,13 +45,13 @@ describe('Request test', async function () {
       const spy = jest.spyOn(request, 'sendDataRetry')
       await request.postJSON(data)
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(Object.assign(data, {
+      expect(spy).toHaveBeenCalledWith(Object.assign({
         options: {
           accept: 'application/json',
           postType: 'json',
           httpMethod: 'post'
         }
-      }))
+      }, data))
       spy.mockClear()
     })
 
@@ -60,14 +60,14 @@ describe('Request test', async function () {
       const spy = jest.spyOn(request, 'sendDataRetry')
       await request.putJSON(data)
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(Object.assign(data, {
+      expect(spy).toHaveBeenCalledWith(Object.assign({
         options: {
           accept: 'application/json',
           postType: 'json',
           httpMethod: 'put'
         }
-      }))
-      // spy.mockClear()
+      }, data))
+      spy.mockClear()
     })
   })
 
@@ -204,7 +204,6 @@ describe('Request test', async function () {
       expect(request1.shouldRetry({err: 'time'})).toBeFalsy()
 
       const request2 = new Request({retryWhenConnectError: false})
-      console.log('aaaaaaaaaa', request2.shouldRetry({err: 'getaddrinfo ENOTFOUND'}))
       expect(request2.shouldRetry({err: 'getaddrinfo ENOTFOUND'})).toBeFalsy()
     })
   })
