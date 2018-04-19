@@ -43,9 +43,12 @@ describe('Request test', async function () {
         msg: 'ok'
       }
       const request = new Request()
-      nock(host).get('/test').reply(200, fakeResult)
+      const query = {name: 'pedro', surname: 'teixeira'}
+      nock(host).get('/test')
+        .query({name: 'pedro', surname: 'teixeira'})
+        .reply(200, fakeResult)
 
-      const res = await request.get(url)
+      const res = await request.get(url, query)
       expect(res).toEqual(fakeResult)
     })
 

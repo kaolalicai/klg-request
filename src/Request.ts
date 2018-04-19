@@ -146,7 +146,7 @@ export class Request {
       accept: 'application/json',
       httpMethod: HTTP_METHOD.GET
     }
-    return await this.sendDataRetry(url, {options})
+    return await this.sendDataRetry(url, {options, body: query})
   }
 
   async post (url, data: RequestData) {
