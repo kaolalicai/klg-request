@@ -10,13 +10,9 @@ describe('Request test', async function () {
     a: 1,
     b: 'bbbbb'
   }
-  const userId = 'uddd12'
-  const requestId = 'abc123456'
+  const url = host + '/test'
   const data = {
-    url: host + '/test',
-    body,
-    userId,
-    requestId
+    body
   }
 
   afterEach(async function () {
@@ -30,22 +26,35 @@ describe('Request test', async function () {
         msg: 'ok'
       }
       const request = new Request()
-      nock(host).post('/test', body).reply(200, function (uri, requestBody) {
-        assert.equal(uri, '/test')
-        assert.deepEqual(JSON.parse(requestBody), body)
+      nock(host).post('/test').reply(200, function (uri, requestBody) {
+        expect(uri).toEqual('/test')
+        expect(JSON.parse(requestBody)).toEqual(body)
         return fakeResult
       })
 
-      const res = await request.postJSON(data)
-      assert.deepEqual(res, fakeResult)
+      const res = await request.post(url, data)
+      expect(res).toEqual(fakeResult)
+      expect.assertions(3)
+    })
+
+    it(' 完整 get 流程 ', async () => {
+      const fakeResult = {
+        code: 0,
+        msg: 'ok'
+      }
+      const request = new Request()
+      nock(host).get('/test').reply(200, fakeResult)
+
+      const res = await request.get(url)
+      expect(res).toEqual(fakeResult)
     })
 
     it(' postJSON ', async () => {
       const request = new Request()
       const spy = jest.spyOn(request, 'sendDataRetry')
-      await request.postJSON(data)
+      await request.post(url, data)
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(Object.assign({
+      expect(spy).toHaveBeenCalledWith(url, Object.assign({
         options: {
           accept: 'application/json',
           postType: 'json',
@@ -58,9 +67,9 @@ describe('Request test', async function () {
     it(' putJSON ', async () => {
       const request = new Request()
       const spy = jest.spyOn(request, 'sendDataRetry')
-      await request.putJSON(data)
+      await request.put(url, data)
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(Object.assign({
+      expect(spy).toHaveBeenCalledWith(url, Object.assign({
         options: {
           accept: 'application/json',
           postType: 'json',
@@ -78,11 +87,9 @@ describe('Request test', async function () {
       const spy = jest.spyOn(request, 'sendDataRetry')
       const data = {
         url: 'http://www.cantconnecttothis.addres' + '/test',
-        body,
-        userId,
-        requestId
+        body
       }
-      const res = await request.postJSON(data)
+      const res = await request.post(data.url, data)
       expect(res.err.includes('getaddrinfo ENOTFOUND'))
       expect(spy).toHaveBeenCalledTimes(5)
     })
@@ -98,7 +105,7 @@ describe('Request test', async function () {
       const request = new Request({timeOut: 10, retryWhenTimeout: true})
       const spy = jest.spyOn(request, 'sendDataRetry')
 
-      const res = await request.postJSON(data)
+      const res = await request.post(url, data)
 
       expect(res.err).toBe('Timeout of 10ms exceeded')
       expect(res.status).toBe(undefined)
@@ -114,7 +121,7 @@ describe('Request test', async function () {
         .post('/test', body)
         .reply(500, {err: '内部错误'})
 
-      const res = await request.postJSON(data)
+      const res = await request.post(url, data)
 
       expect(res.err).toBe('Internal Server Error')
       expect(res.status).toBe(500)
@@ -134,7 +141,7 @@ describe('Request test', async function () {
         return requestBody
       })
 
-      await request.postJSON(data)
+      await request.post(url, data)
     })
 
     it(' afterSend 可以生效 ', async () => {
@@ -147,7 +154,7 @@ describe('Request test', async function () {
           return data
         }
       })
-      await request.postJSON(data)
+      await request.post(url, data)
     })
 
     it(' beforeSend 可以生效 ', async () => {
@@ -161,7 +168,7 @@ describe('Request test', async function () {
           return data
         }
       })
-      await request.postJSON(data)
+      await request.post(url, data)
       expect.assertions(2)
     })
 

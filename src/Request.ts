@@ -8,16 +8,13 @@ const logger = new Logger({
 })
 
 export interface RequestData {
-  userId: string,
-  requestId: string,
   currentAttempt?: number,
-  url: string,
   interfaceName?: string,
   server?: string,
-  body: object,
+  body?: object,
   options?: {
     accept: string,
-    postType: string,
+    postType?: string,
     headers?: object,
     httpMethod: string
   }
@@ -37,6 +34,12 @@ export interface RequestConfig {
 
 export type ResponseData = { err: string, status: string } & object
 
+const HTTP_METHOD = {
+  POST: 'post',
+  GET: 'get',
+  PUT: 'put'
+}
+
 export class Request {
   private config: RequestConfig
 
@@ -49,36 +52,39 @@ export class Request {
       retryWhenConnectError: true
     }
     Object.assign(this.config, config)
-    // if (config) {
-    //   if (config.timeOut !== undefined) this.config.timeOut = config.timeOut
-    //   if (config.retryWhen500 !== undefined) this.config.retryWhen500 = config.retryWhen500
-    //   if (config.retryWhenTimeout !== undefined) this.config.retryWhenTimeout = config.retryWhenTimeout
-    //   if (config.retryWhenConnectError !== undefined) this.config.retryWhenConnectError = config.retryWhenConnectError
-    // }
   }
 
-  async sendData (data: RequestData): Promise<ResponseData> {
+  async sendData (url, data: RequestData): Promise<ResponseData> {
     if (this.config.beforeSend) {
       data = await this.config.beforeSend(data)
     }
-    let {url, interfaceName, server, body, options} = data
+    let {interfaceName, server, body, options} = data
     if (!interfaceName) {
       interfaceName = _.last(url.split('/'))
     }
-    let res = null
     let response = null
     let httpMethod = options.httpMethod
     try {
       logger.info(`request[${httpMethod}] to ${url}`)
-      res = await request[httpMethod](url)
-        .type(options.postType)
+      let query
+      if (httpMethod === HTTP_METHOD.POST || httpMethod === HTTP_METHOD.PUT) {
+        query = request[httpMethod](url)
+          .type(options.postType || '')
+          .send(body)
+      }
+      if (httpMethod === HTTP_METHOD.GET) {
+        query = request.get(url)
+          .timeout(this.config.timeOut)
+          .query(body)
+      }
+      const res = await query
         .timeout(this.config.timeOut)
-        .send(body)
         .set('Accept', options.accept)
         .set(options.headers || {})
       response = JSON.parse(res.text)
     } catch (err) {
       logger.error('request err', url || interfaceName || server || 'none', err.message)
+      logger.info('request err', err.stack)
       response = {err: err.message, status: err.status}
     }
     if (this.config.afterSend) {
@@ -87,13 +93,13 @@ export class Request {
     return response
   }
 
-  async sendDataRetry (data: RequestData, limit = 5) {
-    let res = await this.sendData(data)
+  async sendDataRetry (url, data: RequestData, limit = 5) {
+    let res = await this.sendData(url, data)
     if (this.shouldRetry(res)) {
       // 递归的出口
       if (limit <= 1) return res
       data.currentAttempt = (data.currentAttempt || 1) + 1
-      return await this.sendDataRetry(data, --limit)
+      return await this.sendDataRetry(url, data, --limit)
     }
     return res
   }
@@ -124,21 +130,29 @@ export class Request {
     }
   }
 
-  async postJSON (data: RequestData) {
-    data.options = data.options || {
+  async get (url, query?) {
+    const options = {
       accept: 'application/json',
-      postType: 'json',
-      httpMethod: 'post'
+      httpMethod: HTTP_METHOD.GET
     }
-    return await this.sendDataRetry(data)
+    return await this.sendDataRetry(url, {options})
   }
 
-  async putJSON (data: RequestData) {
+  async post (url, data: RequestData) {
     data.options = data.options || {
       accept: 'application/json',
       postType: 'json',
-      httpMethod: 'put'
+      httpMethod: HTTP_METHOD.POST
     }
-    return await this.sendDataRetry(data)
+    return await this.sendDataRetry(url, data)
+  }
+
+  async put (url, data: RequestData) {
+    data.options = data.options || {
+      accept: 'application/json',
+      postType: 'json',
+      httpMethod: HTTP_METHOD.PUT
+    }
+    return await this.sendDataRetry(url, data)
   }
 }
