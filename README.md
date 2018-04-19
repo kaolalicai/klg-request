@@ -22,6 +22,8 @@ $ npm test
 
 ### Changelog
 1.0.0 add postJson functionality, add putJson functionality
+
+
 2.0.0
     rename postJson to post
     rename putJson to put
@@ -30,4 +32,6 @@ $ npm test
     add factor option, The exponential factor to use. Default is 2.
     add minTimeout option, The number of milliseconds before starting the first retry. Default is 1000.
     change retryWhen500 option to retryWhen50x, support all 50* http status
+
+
 2.1.0 fix get functionality，support query parameter
