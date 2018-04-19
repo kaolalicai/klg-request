@@ -27,7 +27,7 @@ export interface RequestConfig {
   retries?: number
   factor?: number
   minTimeout?: number
-  retryWhen500?: boolean
+  retryWhen50x?: boolean
   retryWhenTimeout?: boolean
   retryWhenConnectError?: boolean
   timeOut?: number
@@ -54,7 +54,7 @@ export class Request {
       factor: 2,
       minTimeout: 1000,
       timeOut: 60000,
-      retryWhen500: true,
+      retryWhen50x: true,
       retryWhenTimeout: false,
       retryWhenConnectError: true
     }
@@ -118,7 +118,7 @@ export class Request {
   shouldRetry (res) {
     if (!res || !res.err) return false
     const config = this.config
-    return Boolean(shouldRetryConnectError(res.err) || shouldRetryStatus500(res) || shouldRetryTimeOut(res.err))
+    return Boolean(shouldRetryConnectError(res.err) || shouldRetryStatus50x(res) || shouldRetryTimeOut(res.err))
 
     function shouldRetryConnectError (err) {
       return config.retryWhenConnectError && (
@@ -129,8 +129,8 @@ export class Request {
       )
     }
 
-    function shouldRetryStatus500 (res) {
-      return config.retryWhen500 && (res.status === 500 || res.status === '500')
+    function shouldRetryStatus50x (res) {
+      return config.retryWhen50x && res.status && (res.status.toString().match(/5\d{2}/))
     }
 
     function shouldRetryTimeOut (err) {

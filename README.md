@@ -11,7 +11,7 @@ npm i klg-request --save
 
 ### Usage
 
-参考 test
+参考 src/Request.test
 
 ### Test
 

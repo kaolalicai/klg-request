@@ -182,7 +182,7 @@ describe('Request test', async function () {
       expect(request1.shouldRetry({status: 200})).toBeFalsy()
       expect(request1.shouldRetry({err: 'error'})).toBeFalsy()
 
-      const request2 = new Request({retryWhen500: false})
+      const request2 = new Request({retryWhen50x: false})
       expect(request2.shouldRetry({err: 'error', status: 500})).toBeFalsy()
       expect(request2.shouldRetry({err: 'error', status: '500'})).toBeFalsy()
       expect(request2.shouldRetry({status: 200})).toBeFalsy()
