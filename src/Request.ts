@@ -1,6 +1,7 @@
 import * as request from 'superagent'
 import * as _ from 'lodash'
 import {Logger} from 'klg-logger'
+import {Retry} from 'klg-retry'
 
 const logger = new Logger({
   level: 'info',
@@ -8,7 +9,6 @@ const logger = new Logger({
 })
 
 export interface RequestData {
-  currentAttempt?: number,
   interfaceName?: string,
   server?: string,
   body?: object,
@@ -24,6 +24,9 @@ export type HandleFunBefore = (data: RequestData) => Promise<RequestData>
 export type HandleFunAfter = (data: any) => Promise<any>
 
 export interface RequestConfig {
+  retries?: number
+  factor?: number
+  minTimeout?: number
   retryWhen500?: boolean
   retryWhenTimeout?: boolean
   retryWhenConnectError?: boolean
@@ -42,16 +45,21 @@ const HTTP_METHOD = {
 
 export class Request {
   private config: RequestConfig
+  private retry: Retry
 
   constructor (config?: RequestConfig) {
     // 默认配置
     this.config = {
+      retries: 4,
+      factor: 2,
+      minTimeout: 1000,
       timeOut: 60000,
       retryWhen500: true,
       retryWhenTimeout: false,
       retryWhenConnectError: true
     }
     Object.assign(this.config, config)
+    this.retry = new Retry()
   }
 
   async sendData (url, data: RequestData): Promise<ResponseData> {
@@ -93,15 +101,18 @@ export class Request {
     return response
   }
 
-  async sendDataRetry (url, data: RequestData, limit = 5) {
-    let res = await this.sendData(url, data)
-    if (this.shouldRetry(res)) {
-      // 递归的出口
-      if (limit <= 1) return res
-      data.currentAttempt = (data.currentAttempt || 1) + 1
-      return await this.sendDataRetry(url, data, --limit)
+  async sendDataRetry (url, data: RequestData) {
+    let res: ResponseData = null
+    try {
+      await this.retry.using(async () => {
+        res = await this.sendData(url, data)
+        if (this.shouldRetry(res)) throw new Error('need retry')
+      }, this.config)
+    } catch (e) {
+      logger.info('重试超过最大次数 exit')
+    } finally {
+      return res
     }
-    return res
   }
 
   shouldRetry (res) {

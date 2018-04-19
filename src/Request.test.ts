@@ -83,8 +83,8 @@ describe('Request test', async function () {
   describe('retry', async function () {
 
     it(' retry by connect err ', async () => {
-      const request = new Request()
-      const spy = jest.spyOn(request, 'sendDataRetry')
+      const request = new Request({factor: 0, minTimeout: 1})
+      const spy = jest.spyOn(request, 'sendData')
       const data = {
         url: 'http://www.cantconnecttothis.addres' + '/test',
         body
@@ -102,8 +102,8 @@ describe('Request test', async function () {
         .reply(200, {code: 0, msg: 'ok'})
 
       // 将超时时间调小
-      const request = new Request({timeOut: 10, retryWhenTimeout: true})
-      const spy = jest.spyOn(request, 'sendDataRetry')
+      const request = new Request({timeOut: 10, retryWhenTimeout: true, factor: 0, minTimeout: 1})
+      const spy = jest.spyOn(request, 'sendData')
 
       const res = await request.post(url, data)
 
@@ -113,8 +113,8 @@ describe('Request test', async function () {
     })
 
     it(' retry by status 500 ', async () => {
-      const request = new Request()
-      const spy = jest.spyOn(request, 'sendDataRetry')
+      const request = new Request({factor: 0, minTimeout: 1})
+      const spy = jest.spyOn(request, 'sendData')
 
       nock(host)
         .persist()
