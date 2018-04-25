@@ -11,6 +11,7 @@ const logger = new Logger({
 export interface RequestData {
   interfaceName?: string,
   server?: string,
+  query?: object,
   body?: object,
   options?: {
     accept: string,
@@ -66,7 +67,7 @@ export class Request {
     if (this.config.beforeSend) {
       data = await this.config.beforeSend(data)
     }
-    let {interfaceName, server, body, options} = data
+    let {interfaceName, server, body, query, options} = data
     if (!interfaceName) {
       interfaceName = _.last(url.split('/'))
     }
@@ -74,18 +75,16 @@ export class Request {
     let httpMethod = options.httpMethod
     try {
       logger.info(`request[${httpMethod}] to ${url}`)
-      let query
+      let operate
       if (httpMethod === HTTP_METHOD.POST || httpMethod === HTTP_METHOD.PUT) {
-        query = request[httpMethod](url)
+        operate = request[httpMethod](url)
           .type(options.postType || '')
           .send(body)
       }
       if (httpMethod === HTTP_METHOD.GET) {
-        query = request.get(url)
-          .timeout(this.config.timeOut)
-          .query(body)
+        operate = request.get(url).query(query)
       }
-      const res = await query
+      const res = await operate
         .timeout(this.config.timeOut)
         .set('Accept', options.accept)
         .set(options.headers || {})
@@ -141,29 +140,32 @@ export class Request {
     }
   }
 
-  async get (url, query?) {
-    const options = {
+  async get (url, data: RequestData) {
+    data.options = data.options || {} as any
+    Object.assign(data.options, {
       accept: 'application/json',
       httpMethod: HTTP_METHOD.GET
-    }
-    return await this.sendDataRetry(url, {options, body: query})
+    })
+    return await this.sendDataRetry(url, data)
   }
 
   async post (url, data: RequestData) {
-    data.options = data.options || {
+    data.options = data.options || {} as any
+    Object.assign(data.options, {
       accept: 'application/json',
       postType: 'json',
       httpMethod: HTTP_METHOD.POST
-    }
+    })
     return await this.sendDataRetry(url, data)
   }
 
   async put (url, data: RequestData) {
-    data.options = data.options || {
+    data.options = data.options || {} as any
+    Object.assign(data.options, {
       accept: 'application/json',
       postType: 'json',
       httpMethod: HTTP_METHOD.PUT
-    }
+    })
     return await this.sendDataRetry(url, data)
   }
 }

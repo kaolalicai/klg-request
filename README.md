@@ -35,3 +35,5 @@ $ npm test
 
 
 2.1.0 fix get functionality，support query parameter
+
+2.2.0 fix get functionality，support options parameter

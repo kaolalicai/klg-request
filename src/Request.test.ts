@@ -45,10 +45,10 @@ describe('Request test', async function () {
       const request = new Request()
       const query = {name: 'pedro', surname: 'teixeira'}
       nock(host).get('/test')
-        .query({name: 'pedro', surname: 'teixeira'})
+        .query(query)
         .reply(200, fakeResult)
 
-      const res = await request.get(url, query)
+      const res = await request.get(url, {query})
       expect(res).toEqual(fakeResult)
     })
 
