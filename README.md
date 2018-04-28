@@ -13,6 +13,21 @@ npm i klg-request --save
 
 参考 src/Request.test
 
+```
+const request = new Request({
+        minTimeout: 1000,    // 最小重试间隔 ms
+        timeOut: 6000,       // 超时 ms
+        retryWhen50x: true,  // 状态码为 50x 时 重试
+        retryWhenTimeout: false,    // 超时重试，默认 false
+        retryWhenConnectError: true // 无法连接是重试
+      })
+
+await request.post(url, {body: {}, options: {headers: {}}})
+
+await request.get(url, {query {}, options: {headers: {}}})
+
+```
+
 ### Test
 
 ```bash

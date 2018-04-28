@@ -90,7 +90,7 @@ export class Request {
         .set(options.headers || {})
       response = JSON.parse(res.text)
     } catch (err) {
-      logger.error('request err', url || interfaceName || server || 'none', err.message)
+      logger.info('request err', url || interfaceName || server || 'none', err.message)
       logger.info('request err', err.stack)
       response = {err: err.message, status: err.status}
     }
