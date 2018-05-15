@@ -88,6 +88,7 @@ export class Request {
         .timeout(this.config.timeOut)
         .set('Accept', options.accept)
         .set(options.headers || {})
+        .then()
       response = JSON.parse(res.text)
     } catch (err) {
       logger.info('request err', url || interfaceName || server || 'none', err.message)
