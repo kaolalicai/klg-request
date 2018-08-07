@@ -14,10 +14,10 @@ export interface RequestData {
   query?: object,
   body?: object,
   options?: {
-    accept: string,
+    accept?: string,
     postType?: string,
     headers?: object,
-    httpMethod: string
+    httpMethod?: string
   }
 }
 
