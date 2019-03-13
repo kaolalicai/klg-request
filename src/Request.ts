@@ -10,9 +10,13 @@ const logger = new Logger({
 
 export interface RequestData {
   interfaceName?: string,
+  url?: string,
+  retryTimes?: number,
+  useTime?: number,
   server?: string,
   query?: object,
   body?: object,
+  response?: any,
   options?: {
     accept?: string,
     postType?: string,
@@ -70,9 +74,12 @@ export class Request {
     let {interfaceName, server, body, query, options} = data
     if (!interfaceName) {
       interfaceName = _.last(url.split('/'))
+      data.interfaceName = interfaceName
+      data.url = url
     }
     let response = null
     let httpMethod = options.httpMethod
+    let startTime = Date.now()
     try {
       logger.info(`request[${httpMethod}] to ${url}`)
       let operate
@@ -94,9 +101,11 @@ export class Request {
       logger.info('request err', url || interfaceName || server || 'none', err.message)
       logger.info('request err', err.stack)
       response = {err: err.message, status: err.status}
+      data.response = response
     }
     if (this.config.afterSend) {
-      response = await this.config.afterSend(response)
+      data.useTime = Date.now() - startTime
+      response = await this.config.afterSend(data)
     }
     return response
   }
@@ -106,7 +115,11 @@ export class Request {
     try {
       await this.retry.using(async () => {
         res = await this.sendData(url, data)
-        if (this.shouldRetry(res)) throw new Error('need retry')
+        if (this.shouldRetry(res)) {
+          if (!data.retryTimes) data.retryTimes = 0
+          data.retryTimes += 1
+          throw new Error('need retry')
+        }
       }, this.config)
     } catch (e) {
       logger.info('重试超过最大次数 exit')
