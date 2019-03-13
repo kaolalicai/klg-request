@@ -101,10 +101,10 @@ export class Request {
       logger.info('request err', url || interfaceName || server || 'none', err.message)
       logger.info('request err', err.stack)
       response = {err: err.message, status: err.status}
-      data.response = response
     }
     if (this.config.afterSend) {
       data.useTime = Date.now() - startTime
+      data.response = response
       response = await this.config.afterSend(data)
     }
     return response

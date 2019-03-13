@@ -154,9 +154,9 @@ describe('Request test', async function () {
       const request = new Request({
         afterSend: async function (data: RequestData) {
           console.log('==data', data)
-          // expect(data.response)
-          // expect(data.response.code).toBe(101)
-          return data
+          expect(data.response)
+          expect(data.response.code).toBe(101)
+          return data.response
         }
       })
       await request.post(url, data)
